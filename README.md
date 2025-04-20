@@ -91,3 +91,9 @@ jupyter notebook
 * Email: your.email@example.com
 * GitHub: @yourusername
 * LinkedIn: linkedin.com/in/yourusername
+
+### Что сделано:
+1. Сделала форк оригинального репозитория
+2. Настроила конфигурацию git (email/username)
+3. Создала виртуальное окружение
+4. Активировала виртуальное окружение и установила пакеты
