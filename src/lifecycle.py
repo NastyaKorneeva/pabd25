@@ -21,6 +21,7 @@ import pandas as pd
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
+from pathlib import Path
 
 TEST_SIZE = 0.2
 N_ROOMS = 1  # just for the parsing step
@@ -34,6 +35,12 @@ logging.basicConfig(
     level=logging.DEBUG,
 )
 
+DATA_PATH = Path(__file__).parent.parent / "data"
+DATA_RAW_PATH = DATA_PATH / "raw"
+DATA_RAW_PATH.mkdir(exist_ok=True, parents=True)
+DATA_PROCESSED_PATH = DATA_PATH / "raw"
+DATA_PROCESSED_PATH.mkdir(exist_ok=True, parents=True)
+
 
 def parse_cian(n_rooms=1):
     """
@@ -44,7 +51,7 @@ def parse_cian(n_rooms=1):
     moscow_parser = cianparser.CianParser(location="Москва")
 
     t = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-    csv_path = f"data/raw/{n_rooms}_{t}.csv"
+    csv_path = DATA_RAW_PATH / f"{n_rooms}_{t}.csv"
     data = moscow_parser.get_flats(
         deal_type="sale",
         rooms=(n_rooms,),
@@ -100,13 +107,13 @@ def preprocess_data(test_size):
     test_head = "\n" + str(test_df.head())
     logging.info(test_head)
 
-    train_df.to_csv("data/processed/train.csv")
-    test_df.to_csv("data/processed/test.csv")
+    train_df.to_csv(DATA_PROCESSED_PATH / "train.csv")
+    test_df.to_csv(DATA_PROCESSED_PATH / "test.csv")
 
 
 def train_model(model_path):
     """Train model and save with MODEL_NAME"""
-    train_df = pd.read_csv("data/processed/train.csv")
+    train_df = pd.read_csv(DATA_PROCESSED_PATH / "train.csv")
     X = train_df[
         [
             "total_meters",
@@ -129,8 +136,8 @@ def train_model(model_path):
 
 def test_model(model_path):
     """Test model with new data"""
-    test_df = pd.read_csv("data/processed/test.csv")
-    train_df = pd.read_csv("data/processed/train.csv")
+    test_df = pd.read_csv(DATA_PROCESSED_PATH / "test.csv")
+    train_df = pd.read_csv(DATA_PROCESSED_PATH / "train.csv")
     X_test = test_df[
         [
             "total_meters",
@@ -196,7 +203,8 @@ if __name__ == "__main__":
     assert 0.0 <= test_size <= 0.5
     model_path = os.path.join("models", args.model)
 
-    if args.parse_data:
+    any_files = next(DATA_RAW_PATH.iterdir(), False)
+    if args.parse_data or not any_files:
         parse_cian(args.n_rooms)
     preprocess_data(test_size)
     train_model(model_path)
