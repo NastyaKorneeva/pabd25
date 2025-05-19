@@ -11,34 +11,50 @@ Linear regression with 5 features:
 import argparse
 import datetime
 import glob
+import logging
 import os
+from logging.config import dictConfig
+from pathlib import Path
 
 import cianparser
-import logging
-import joblib
-import numpy as np
 import pandas as pd
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-from pathlib import Path
+
+from trainers import CatBoostTrainer, LinRegTrainer
 
 TEST_SIZE = 0.2
 N_ROOMS = 1  # just for the parsing step
 MODEL_NAME = "decision_tree_reg_1.pkl"
 
-logging.basicConfig(
-    filename="train.log",
-    filemode="a",
-    format="%(asctime)s,%(msecs)03d %(name)s %(levelname)s %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.DEBUG,
+
+dictConfig(
+    {
+        "version": 1,
+        "formatters": {
+            "default": {
+                "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+            }
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout",
+                "formatter": "default",
+            },
+            "file": {
+                "class": "logging.FileHandler",
+                "filename": "train.log",
+                "formatter": "default",
+            },
+        },
+        "root": {"level": "DEBUG", "handlers": ["console", "file"]},
+    }
 )
 
 DATA_PATH = Path(__file__).parent.parent / "data"
 DATA_RAW_PATH = DATA_PATH / "raw"
 DATA_RAW_PATH.mkdir(exist_ok=True, parents=True)
-DATA_PROCESSED_PATH = DATA_PATH / "raw"
+DATA_PROCESSED_PATH = DATA_PATH / "processed"
 DATA_PROCESSED_PATH.mkdir(exist_ok=True, parents=True)
 
 
@@ -111,73 +127,18 @@ def preprocess_data(test_size):
     test_df.to_csv(DATA_PROCESSED_PATH / "test.csv")
 
 
-def train_model(model_path):
-    """Train model and save with MODEL_NAME"""
-    train_df = pd.read_csv(DATA_PROCESSED_PATH / "train.csv")
-    X = train_df[
-        [
-            "total_meters",
-            "floors_count",
-            "rooms_1",
-            "rooms_2",
-            "rooms_3",
-            "first_floor",
-            "last_floor",
-        ]
-    ]
-    y = train_df["price"]
-    model = DecisionTreeRegressor(max_depth=5)
-    model.fit(X.values, y)
+def infer_model_type(model_path):
+    if not isinstance(model_path, Path):
+        model_path = Path(model_path)
 
-    logging.info(f"Train {model} and save to {model_path}")
-
-    joblib.dump(model, model_path)
-
-
-def test_model(model_path):
-    """Test model with new data"""
-    test_df = pd.read_csv(DATA_PROCESSED_PATH / "test.csv")
-    train_df = pd.read_csv(DATA_PROCESSED_PATH / "train.csv")
-    X_test = test_df[
-        [
-            "total_meters",
-            "floors_count",
-            "rooms_1",
-            "rooms_2",
-            "rooms_3",
-            "first_floor",
-            "last_floor",
-        ]
-    ]
-    y_test = test_df["price"]
-    X_train = train_df[
-        [
-            "total_meters",
-            "floors_count",
-            "rooms_1",
-            "rooms_2",
-            "rooms_3",
-            "first_floor",
-            "last_floor",
-        ]
-    ]
-    y_train = train_df["price"]
-    model = joblib.load(model_path)
-    # Предсказание на тестовой выборке
-    y_pred = model.predict(X_test)
-
-    # Оценка модели
-    mse = mean_squared_error(y_test, y_pred)
-    rmse = np.sqrt(mse)
-    mae = np.mean(np.abs(y_test - y_pred))
-    r2_train = model.score(X_train, y_train)
-    r2_test = model.score(X_test, y_test)
-
-    logging.info(f"Test model. MSE: {mse:.2f}")
-    logging.info(f"Test model. RMSE: {rmse:.2f}")
-    logging.info(f"Test model. MAE: {mae:.2f}")
-    logging.info(f"Test model. R2 train: {r2_train:.2f}")
-    logging.info(f"Test model. R2 test: {r2_test:.2f}")
+    model_folder = model_path.parent.stem
+    match model_folder:
+        case "linear_regression":
+            return LinRegTrainer
+        case "catboost":
+            return CatBoostTrainer
+        case _:
+            raise ValueError("unknown model type")
 
 
 if __name__ == "__main__":
@@ -207,5 +168,12 @@ if __name__ == "__main__":
     if args.parse_data or not any_files:
         parse_cian(args.n_rooms)
     preprocess_data(test_size)
-    train_model(model_path)
-    test_model(model_path)
+
+    train_df = pd.read_csv(DATA_PROCESSED_PATH / "train.csv")
+    test_df = pd.read_csv(DATA_PROCESSED_PATH / "test.csv")
+
+    trainer_cls = infer_model_type(model_path)
+    trainer = trainer_cls(model_path=model_path, train_df=train_df, test_df=test_df)
+
+    train_metrics = trainer.train()
+    test_metrics = trainer.test()
