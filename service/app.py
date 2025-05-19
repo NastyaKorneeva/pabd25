@@ -46,7 +46,7 @@ def process_numbers():
 
     data = request.get_json()
 
-    app.logger.info(f"Requst data: {data}")
+    app.logger.info(f"Request data: {data}")
     try:
         total_meters = float(data["area"])
         floors_count = int(data["total_floors"])
@@ -58,21 +58,8 @@ def process_numbers():
     except ValueError:
         return {"status": "error", "data": "Ошибка парсинга данных"}
 
-    price = app.config["model"].predict(
-        [
-            [
-                total_meters,
-                floors_count,
-                rooms_1,
-                rooms_2,
-                rooms_3,
-                first_floor,
-                last_floor,
-            ]
-        ]
-    )[0]
-    price = int(price)
-    return {"status": "success", "data": price}
+    
+    return {"status": "success", "data": total_meters * app.config["price_for_meter"]}
 
 
 if __name__ == "__main__":
@@ -81,6 +68,10 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--model", help="Model name", default=MODEL_NAME)
     args = parser.parse_args()
 
-    app.config["model"] = joblib.load(args.model)
+    try:
+        app.config["model"] = joblib.load(args.model)
+    except FileNotFoundError:
+        app.config["model"] = None
+    app.config["price_for_meter"] = 300_000
     app.logger.info(f"Use model: {args.model}")
     app.run(debug=True)
