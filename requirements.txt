@@ -10,3 +10,4 @@ catboost
 isort
 dvc
 pyyaml
+dvc_s3
