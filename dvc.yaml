@@ -1,0 +1,6 @@
+stages:
+  train:
+    cmd: python .\src\lifecycle.py
+    deps:
+    - .\params.yaml
+    - .\src\lifecycle.py

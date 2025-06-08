@@ -1,0 +1,13 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python .\src\lifecycle.py
+    deps:
+    - path: .\params.yaml
+      hash: md5
+      md5: 8953453419e0e4ac5115ae2f04954af1
+      size: 53
+    - path: .\src\lifecycle.py
+      hash: md5
+      md5: 97847b44cb6d43de9353345d89c756ca
+      size: 5590

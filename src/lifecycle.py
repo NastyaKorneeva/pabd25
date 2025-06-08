@@ -21,6 +21,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from trainers import CatBoostTrainer, LinRegTrainer
+import yaml
 
 TEST_SIZE = 0.2
 N_ROOMS = 1  # just for the parsing step
@@ -127,6 +128,12 @@ def preprocess_data(test_size):
     test_df.to_csv(DATA_PROCESSED_PATH / "test.csv")
 
 
+def load_params():
+    with open("params.yaml", "r") as f:
+        params = yaml.safe_load(f)
+    return params
+
+
 def infer_model_type(model_path):
     if not isinstance(model_path, Path):
         model_path = Path(model_path)
@@ -143,6 +150,8 @@ def infer_model_type(model_path):
 
 if __name__ == "__main__":
     """Parse arguments and run lifecycle steps"""
+    params = load_params()["train"]
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-s",
@@ -154,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-n", "--n_rooms", help="Number of rooms to parse", type=int, default=N_ROOMS
     )
-    parser.add_argument("-m", "--model", help="Model name", default=MODEL_NAME)
+    parser.add_argument("-m", "--model", help="Model name", default=params["model"])
     parser.add_argument(
         "-p", "--parse_data", help="Flag to parse new data", action="store_true"
     )
