@@ -8,3 +8,4 @@ black
 joblib
 catboost
 isort
+dvc
