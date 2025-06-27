@@ -1,2 +1,7 @@
 train:
-  model: linear_regression/dvc_example.joblib
+  model: "models/linear_regression/linreg.pkl"
+  test_size: 0.2
+data:
+  n_rooms: 1
+  price_limit: 100000000
+  area_limit: 100

@@ -11,3 +11,69 @@ stages:
       hash: md5
       md5: 97847b44cb6d43de9353345d89c756ca
       size: 5590
+  parse_data:
+    cmd: python src/stages/parse_data.py
+    deps:
+    - path: src/stages/parse_data.py
+      hash: md5
+      md5: 5862069c7a53beaf7682518c141cefa2
+      size: 2666
+    params:
+      params.yaml:
+        data.n_rooms: 1
+    outs:
+    - path: data/raw
+      hash: md5
+      md5: a88a67f82be791558b7bf2997c0ab782.dir
+      size: 5590
+      nfiles: 1
+  preprocess_data:
+    cmd: python src/stages/build_features.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: a88a67f82be791558b7bf2997c0ab782.dir
+      size: 5590
+      nfiles: 1
+    - path: src/stages/build_features.py
+      hash: md5
+      md5: d7ccb6ddb2784fa1c6e850f24f609be7
+      size: 1455
+    params:
+      params.yaml:
+        data.area_limit: 100
+        data.price_limit: 100000000
+        train.test_size: 0.2
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: e3f630967264a4dd3ea78fbbe7d61aae
+      size: 706
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e1f11bfab6d5133aadd122da44125bc0
+      size: 2557
+  train_model:
+    cmd: python src/stages/train_model.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: e3f630967264a4dd3ea78fbbe7d61aae
+      size: 706
+    - path: data/processed/train.csv
+      hash: md5
+      md5: e1f11bfab6d5133aadd122da44125bc0
+      size: 2557
+    - path: src/stages/train_model.py
+      hash: md5
+      md5: 78562c597666342189b6a7bb260598a1
+      size: 860
+    params:
+      params.yaml:
+        train.model: models/linear_regression/linreg.pkl
+    outs:
+    - path: models
+      hash: md5
+      md5: 6020c58213f81a1bbaedb027985597f3.dir
+      size: 1656
+      nfiles: 1

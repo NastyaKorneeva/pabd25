@@ -2,4 +2,4 @@
     remote = storage
 ['remote "storage"']
     url = s3://pabd25/ailabintsev
-endpointurl = https://storage.yandexcloud.net
+    endpointurl = https://storage.yandexcloud.net

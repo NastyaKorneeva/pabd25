@@ -1,6 +1,33 @@
 stages:
-  train:
-    cmd: python .\src\lifecycle.py
+  parse_data:
+    cmd: python src/stages/parse_data.py
     deps:
-    - .\params.yaml
-    - .\src\lifecycle.py
+      - src/stages/parse_data.py
+    outs:
+      - data/raw
+    params:
+      - data.n_rooms
+
+  preprocess_data:
+    cmd: python src/stages/build_features.py
+    deps:
+      - src/stages/build_features.py
+      - data/raw
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+    params:
+      - train.test_size
+      - data.price_limit
+      - data.area_limit
+
+  train_model:
+    cmd: python src/stages/train_model.py
+    deps:
+      - src/stages/train_model.py
+      - data/processed/train.csv
+      - data/processed/test.csv
+    outs:
+      - models
+    params:
+      - train.model

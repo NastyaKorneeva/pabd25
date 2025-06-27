@@ -175,6 +175,7 @@ if __name__ == "__main__":
 
     any_files = next(DATA_RAW_PATH.iterdir(), False)
     if args.parse_data or not any_files:
+        print("go")
         parse_cian(args.n_rooms)
     preprocess_data(test_size)
 
