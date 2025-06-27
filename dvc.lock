@@ -24,7 +24,7 @@ stages:
     outs:
     - path: data/raw
       hash: md5
-      md5: a88a67f82be791558b7bf2997c0ab782.dir
+      md5: 49858fae65e012409791e88369dbf36f.dir
       size: 5590
       nfiles: 1
   preprocess_data:
@@ -32,7 +32,7 @@ stages:
     deps:
     - path: data/raw
       hash: md5
-      md5: a88a67f82be791558b7bf2997c0ab782.dir
+      md5: 49858fae65e012409791e88369dbf36f.dir
       size: 5590
       nfiles: 1
     - path: src/stages/build_features.py
